@@ -96,7 +96,7 @@ char	*ft_itoa_base(long long nb, int base, char *digits)
 		sign = 1;
 	}
 	len = ft_int_len(nb, base);
-	str = (char *)malloc(sizeof(char) * (len + sign + 1/*2*/));
+	str = (char *)malloc(sizeof(char) * (len + sign + 1));
 	str[len + sign] = '\0';
 	i = len + sign - 1;
 	while (nb > 0)
@@ -184,7 +184,6 @@ char	*ft_strjoin(char *s1, char *s2)
 		res[i + j] = s2[j];
 	res[i + j] = '\0';
 	return (res);
-
 }
 
 //ft_dispatch ==> renvoi la string avce le résultat pour aller dans le char **
@@ -265,42 +264,72 @@ size_t	ft_len_res(char const *str, char **tab)
 ////////////////////////////////////////////////////
 
 ///ft_printf
-void	ft_pts(char *s, size_t size)
+int	ft_pts(char *s, size_t size)
 {
 	size_t	i;
 
 	i = -1;
-	while (++i < size)
-		write (1, &s[i], 1);
-}
-
-int	ft_printf(char const *str, ...)
-{
-	va_list		ag;
-	char		**res;
-	size_t		i;
-	size_t		j;
-
-	va_start(ag, str);
-	if (ag == NULL)
+	if (!s)
 		return (0);
-	res = ft_printf_2(str, ag);
-	va_end(ag);
-	i = -1;
-	j = -1;
+	while (++i < size)
+	{
+		if (! (write (1, &s[i], 1)))
+			return (0);
+	}
+	return (1);
+}
+/// ft_print affiche le resultat final 
+int	ft_print(char const *str, char **res, size_t i, size_t j)
+{
+	if (!str || !res)
+		return (0);
 	while (++i < ft_len_str((char *)str))
 	{
-		if (str[i] == '%' && ft_is_in(str[i + 1], "hlocsipudxX%") == 1 && ++j < ft_numb_of_strings(str) && i++)
+		if (str[i] == '%' && ft_is_in(str[i + 1], "hlocsipudxX%") == 1 && ++j < ft_numb_of_strings(str))
 		{
-			ft_pts(res[j], ft_len_str(res[j]));
+			if (ft_pts(res[j], ft_len_str((char *)res[j])) == 0)
+			{
+				write (1, "ERROR\n", 6);
+				return (0);
+			}
 			while (str[i] && str[i + 1] && ft_is_in(str[i + 1] , "hlocspiudxX") == 1)
 				++i;
 		}
 		else
 			write (1, &str[i], 1);
 	}
-	if (!res)
+	return (1);
+}
+///////////////////////////////////////////
+
+/// free le tableau en 2d  
+int ft_free(char **res, char const *str)
+{
+	size_t	j;
+
+	j = 0;
+	while (j < ft_numb_of_strings(str))
+	{
+		free(res[j]);
+		j++;
+	}
+	return (0);
+}
+///////////////////////////////////
+int	ft_printf(char const *str, ...)
+{
+	va_list		ag;
+	char		**res;
+
+	va_start(ag, str);
+	if (ag == NULL)
 		return (0);
+	res = ft_printf_2(str, ag);
+	if (!res)
+		return (ft_free(res, str));
+	va_end(ag);
+	if (ft_print(str, res, -1, -1) == 0)
+		return (ft_free(res, str));
 	return (ft_len_res(((char *)str), res));
 }
 //////////////////////////////////
@@ -314,11 +343,11 @@ int	main()
 
 	ft_printf("Integer: %d\n", i);
 	ft_printf("Character: %c\n", c);
-	ft_printf("String: %s%s\n", s, s);
+	ft_printf("String: %d %s%s\n", 56, s, s);
 	ft_printf("Double: %f\n", d);
 	ft_printf("Hexadecimal: %x\n", i);
 	ft_printf("Octal: %o\n", i);
-	ft_printf("Long integer: %ld\n", (long)i);//////////////////////
+	ft_printf("Long integer: %ld\n", (long)i);
 	ft_printf("Long long integer: %lld\n", (long long)i);
 	ft_printf("Short integer: %hd\n", (short)i);
 	ft_printf("Unsigned integer: %u\n", (unsigned int)i);
@@ -327,6 +356,10 @@ int	main()
 	ft_printf("Pointer address: %p\n", (void *)&i);
 	ft_printf("Scientific notation: %e\n", d);
 	ft_printf("Scientific notation with uppercase: %E\n", d);
+
+	char *n = NULL;
+	ft_printf("%s<<%s>>\n", "bonjour", n);
+	ft_printf("%i\n", 45);
 
 	//TEST OK
 //	int	n = -70;
